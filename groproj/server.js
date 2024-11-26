@@ -67,18 +67,18 @@ userSchema.methods.verifyPassword = function(password) {
 const User = mongoose.model("User", userSchema);
 */
 
-
+/*
 const users = [
     { username: 'admin', password: 'admin' },
     { username: 'user1', password: 'password1' },
     { username: 'user2', password: 'password2' }
-];
+];*/
 
 //var user = {};  
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(session({ secret: "yourSecretKey", resave: false, saveUninitialized: false }));
+app.use(session({ secret: "yourSecretKey", resave: true, saveUninitialized: false }));
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -122,18 +122,55 @@ passport.use(new LocalStrategy(
   }
 ));*/
 
-passport.use(new LocalStrategy(	
-  function(username, password, done) {
-  	const user = users.find(user => user.username === username);
-  	
-  	if (!user) {
-  	return done(null, false, {message: 'Incorrect username or password' });
-  	}
-  	if (user.password !== password) {
-  	return done(null, false, {message: 'Incorrect username or password' });
-    	}
-    	return done(null, user);
+app.get('/', (req, res) => {
+  console.log(req.session)
+  console.log(req.sessionID) 
+})
+
+app.post('/login', (req, res) => {
+  const users = [
+  {
+    username: 'admin',
+    password: 'admin'
+  },
+  {
+    username: 'testing',
+    password: '12345678'
+  },
+  ]
+  const { username, password } = req.body
+  if (username.trim() === '' || password.trim() === '') {
+    return res.render('index', { alert: 'Password or email is incorrect' })
   }
+  for (let user of users) {
+    if (user.username === username && user.password === password) {
+      req.session.user = user.username
+      return res.redirect('/create')
+    }
+  }
+  return res.render('login', { alert: 'Password or email is incorrect' })
+})
+
+function auth(req, res, next) {
+  if (req.session.user) {
+  console.log('authenticated')
+  next()
+  } else {
+  console.log('not authenticated')
+  return res.redirect('/')
+  }
+}
+app.get('/welcome', auth, (req, res) => {
+  const userName = req.session.user
+  return res.status(200).render('login');
+  })
+})
+
+passport.use(new LocalStrategy( (username, password, done) => { 
+	const user = users.find(user => user.username === username); 
+	if (!user) { return done(null, false, { message: 'Incorrect username.' }); } 
+	if (user.password !== password) { return done(null, false, { message: 'Incorrect password.' }); } 
+	return done(null, user); }
 ));
 
 passport.serializeUser(function (user, done) {done(null, user.username);});
