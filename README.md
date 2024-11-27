@@ -1,6 +1,6 @@
-# Project Title
+# Store Stock Management System
 
-A brief description of your project.
+Group 53
 
 ## Table of Contents
 - [Installation](#installation)
